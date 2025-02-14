@@ -18,3 +18,24 @@ modules
 user.js---name, email, password
 products.js
 order.js
+
+
+//JWT Tokens
+jsonwebtoken->it i a secret code that we generate after some specific task
+ 1.Header->Tells Which Algorithm is used
+ 2.Payload->Store User Info
+ 3.Signature->for verifying token we use some secret key
+
+ symmetic algorithm->it is used for generating signature
+ asymmetric algorithm->it is used for verifying signature
+
+ algo name->it is used for identifying the algorithm
+ HS256,HS384,HS512
+
+npm i jsonwebtoken
+
+for install crypto-> npm install crypto
+
+
+
+
