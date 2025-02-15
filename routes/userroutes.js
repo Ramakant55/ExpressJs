@@ -15,25 +15,25 @@ router.post("/users",async(req,res)=>{
             return res.status(400).json({message:"User already exists"});
         }
         const newUser=new User({name,email,password,dob,phone});
-
-        const token = jwt.sign({ userId: newUser._id,email:newUser.email },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' });
         const mailOptions = {
             from: process.env.EMAIL,
             to: email,
             subject: "Welcome to Our Platform!",
             text: `Hello ${name},\n\nThank you for registering as a User on our platform.\n\nYour Email: ${email}\n\nBest Regards,\nYour Company Name`
         };
-
+        
         // Send email
         const emailResponse = await sendEmail(mailOptions);
         if (!emailResponse.success) {
             console.log("Email failed:", emailResponse.error);
         }
-
+        
         await newUser.save();
-        res.status(200).json({message:"User created successfully",user:newUser});
+        
+                const token = jwt.sign({ userId: newUser._id,email:newUser.email },
+                    process.env.JWT_SECRET,
+                    { expiresIn: '1h' });
+        res.status(200).json({message:"User created successfully",token:token});
 
     }catch(error){
      res.status(500).json({message:"Error creating User",error});
