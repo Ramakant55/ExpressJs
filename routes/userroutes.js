@@ -6,40 +6,37 @@ const router=express.Router(); //method for routing
 
 //create a router for post
 
-router.post('/users/register', async (req, res) => {
-    const { name, email, password, dob, phone } = req.body;
+router.post("/users",async(req,res)=>{
 
-    try {
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: "Oops! This email is already registered with us." });
+    try{
+        const {name,email,password,dob,phone}=req.body;
+        const existingUser=await User.findOne({email});
+        if(existingUser){
+            return res.status(400).json({message:"User already exists"});
         }
+        const newUser=new User({name,email,password,dob,phone});
 
-        const newUser = new User({ name, email, password, dob, phone });
-        await newUser.save();
-
-        // Generate OTP
-        const otp = generateOTP();
-        // Create a JWT token with the OTP ye otp verify ke time kam aayega
-        /// ye token verify otp tak shahi hai 
-
-        // const token = jwt.sign({ otp: otp }, process.env.JWT_SECRET, { expiresIn: '10m' });
-
-        // aur ye track karne ke liye ki email verify hui h ye nahi iss line me email include krna hoga
-        const token = jwt.sign({ email: email, otp: otp }, process.env.JWT_SECRET, { expiresIn: '10m' });
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: process.env.EMAIL,
             to: email,
-            subject: 'Welcome to Our e-Ayurveda Platform!',
-            text: `Dear ${name},\n\nThank you for registering at our e-Ayurveda platform. We are thrilled to have you on board. Please verify your email address using the following One Time Password (OTP): ${otp}. This OTP is valid for only 10 minutes.\n\nIf you did not initiate this request, please ignore this email or contact us for support.\n\nBest Regards,\nThe e-Ayurveda Team`
+            subject: "Welcome to Our Platform!",
+            text: `Hello ${name},\n\nThank you for registering as a User on our platform.\n\nYour Email: ${email}\n\nBest Regards,\nYour Company Name`
         };
 
-        const emailRes = await sendEmail(mailOptions);
-        res.status(200).json({ message: "User registered successfully! An OTP has been sent to your email.", emailRes, token });
-    } catch (error) {
-        res.status(500).json({ message: "There was an error creating your account, please try again.", error });
+        // Send email
+        const emailResponse = await sendEmail(mailOptions);
+        if (!emailResponse.success) {
+            console.log("Email failed:", emailResponse.error);
+        }
+
+        await newUser.save();
+        res.status(200).json({message:"User created successfully",user:newUser});
+
+    }catch(error){
+     res.status(500).json({message:"Error creating User",error});
     }
-});
+    
+})
 
 router.post("/user/login", async (req, res) => {
     try {
