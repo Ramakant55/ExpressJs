@@ -16,6 +16,9 @@ router.post("/users",async(req,res)=>{
         }
         const newUser=new User({name,email,password,dob,phone});
 
+        const token = jwt.sign({ userId: newUser._id,email:newUser.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' });
         const mailOptions = {
             from: process.env.EMAIL,
             to: email,
