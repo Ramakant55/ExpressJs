@@ -1,5 +1,4 @@
 const express = require("express");
-
 const User = require("../models/user");
 const {sendEmail}=require("../config/emailConfig");
 const jwt=require("jsonwebtoken");

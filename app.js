@@ -7,12 +7,12 @@ const sellerroutes=require("./routes/sellerroutes");
 const productroutes=require("./routes/productroutes");
 const orderroutes=require("./routes/orderroutes");
 const loginroutes=require("./routes/loginroutes");
-
+const cors=require("cors");
 const express = require("express");
 //reference of express
 const app = express();
 app.use(express.json());
-
+app.use(cors());
 //call this function for connection
 connectDB();
 app.get("/", (req, res) => {
