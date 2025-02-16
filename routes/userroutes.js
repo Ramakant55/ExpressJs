@@ -23,7 +23,7 @@ router.post("/users",async(req,res)=>{
             from: process.env.EMAIL,
             to: email,
             subject: "Welcome to Our Platform!",
-            text: `Hello ${name},\n\nThank you for registering as a User on our platform.\n\nYour otp is ${x}\n\nBest Regards,\nYour Company Name`
+            text: `Hello ${name},\n\nThank you for registering as a User on our platform.\n\nYour otp is ${x} \n\nBest Regards,\nYour Company Name`
         };
         
         // Send email
@@ -45,24 +45,41 @@ router.post("/users",async(req,res)=>{
     
 })
 
-router.post("/users/verify-otp",async(req,res)=>{
-    try{
- const {otpToken,otp}=req.body;
- const decoded=jwt.verify(otpToken,process.env.JWT_SECRET);
- if(!decoded || decoded.otp !==otp){
-return res.status(400).json({ message: "Invalid OTP or Token Expired" });
- }
+// router.post("/users/verify-otp",async(req,res)=>{
+//     try{
+//  const {otpToken,otp}=req.body;
+//  const decoded=jwt.verify(otpToken,process.env.JWT_SECRET);
+//  if(!decoded || decoded.otp !==otp){
+// return res.status(400).json({ message: "Invalid OTP or Token Expired" });
+//  }
 
- const email=decoded.email;
- const user= await User.findOne({email});
- user.isEmailVerified=true;
- await user.save();
- return res.status(200).json({ message: "OTP verified successfully", user });
+//  const email=decoded.email;
+//  const user= await User.findOne({email});
+//  user.isEmailVerified=true;
+//  await user.save();
+//  return res.status(200).json({ message: "OTP verified successfully", user });
 
 
-    }catch(error){
-        return res.status(500).json({ message: "Error verifying OTP", error });
+//     }catch(error){
+//         return res.status(500).json({ message: "Error verifying OTP", error });
       
+//     }
+// })
+
+
+router.post('/users/verify-otp',async(req,res)=>{
+    const{token,userOtp}=req.body;
+    try {
+         const decoded = jwt.verify(token,process.env.JWT_SECRET);
+         if(decoded.otp=== userOtp){
+            // ye line tab add karni hai jab aap ye chahte hai ki jab tak otp verify na ho tab tak login route access na ho 
+            await User.updateOne({ email: decoded.email }, { isEmailVerified: true });
+            res.status(200).json({message:"OTP Verified Successfully"});
+         }else{
+            res.status(400).json({message:"Invalid OTP , please try again."})
+         }
+    } catch (error) {
+        return res.status(500).json({message:"Otp verification Failed or Otp has expired"})
     }
 })
 
