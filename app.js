@@ -24,6 +24,6 @@ app.use("/api",sellerroutes,);
 app.use("/api",productroutes,);
 app.use("/api",loginroutes,);
 app.use("/api",orderroutes,);
-app.listen(3000, () => {
-    console.log("Server started on port 3000");
+app.listen(8080, () => {
+    console.log("Server started on port 8080");
 })
