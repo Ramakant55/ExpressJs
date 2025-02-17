@@ -23,8 +23,17 @@ router.post("/users",async(req,res)=>{
             from: process.env.EMAIL,
             to: email,
             subject: "Welcome to Our Platform!",
-            text: `Hello ${name},\n\nThank you for registering as a User on our platform.\n\nYour otp is ${x} \n\nBest Regards,\nYour Company Name`
-        };
+            html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
+                <h2 style="color: #333;">Welcome, ${name}!</h2>
+                <p>Thank You For Registering On Our Ayurveda Platform.</p>
+                <p>Your OTP for verification is:</p>
+                <div style="background-color: #fff; border: 1px solid #ddd; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; width: 150px; margin: 20px auto;">
+                    ${x}
+                </div>
+                <p>Best Regards,<br>Ayurveda</p>
+            </div>
+        `        };
         
         // Send email
         const emailResponse = await sendEmail(mailOptions);
