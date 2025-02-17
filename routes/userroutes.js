@@ -72,6 +72,57 @@ router.post('/users/verify-otp',async(req,res)=>{
     }
 })
 
+router.post("/users/resend-otp", async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // Check if user exists
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Generate new OTP using the global function
+        const newOtp = generateOtp();
+        const otpExpiry = Date.now() + 5 * 60 * 1000; // OTP valid for 5 min
+
+        // Update OTP in database
+        user.otp = newOtp;
+        user.otpExpiry = otpExpiry;
+        await user.save();
+
+        // Email options
+        const mailOptions = {
+            from: process.env.EMAIL,
+            to: email,
+            subject: "Your OTP Code",
+            html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
+                <h2 style="color: #333;">Resend OTP</h2>
+                <p>Your new OTP for verification is:</p>
+                <div style="background-color: #fff; border: 1px solid #ddd; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; width: 150px; margin: 20px auto;">
+                    ${newOtp}
+                </div>
+                <p>This OTP is valid for 5 minutes.</p>
+                <p>Best Regards,<br>Ayurveda</p>
+            </div>
+            `
+        };
+
+        // Send OTP via email
+        const emailResponse = await sendEmail(mailOptions);
+        if (!emailResponse.success) {
+            return res.status(500).json({ message: "Failed to send OTP", error: emailResponse.error });
+        }
+
+        res.status(200).json({ message: "OTP resent successfully" });
+
+    } catch (error) {
+        res.status(500).json({ message: "Error resending OTP", error });
+    }
+});
+
+
 router.post("/user/login", async (req, res) => {
     try {
         const { email, password } = req.body;
