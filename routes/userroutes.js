@@ -34,7 +34,7 @@ router.post("/users",async(req,res)=>{
         
         await newUser.save();
         
-                const token = jwt.sign({ otp:x,email:newUser.email },
+                const token = jwt.sign({ otp:x,email:newUser.email},
                     process.env.JWT_SECRET,
                     { expiresIn: '1h' });
         res.status(200).json({message:"User created successfully",token:token});
@@ -45,26 +45,6 @@ router.post("/users",async(req,res)=>{
     
 })
 
-// router.post("/users/verify-otp",async(req,res)=>{
-//     try{
-//  const {otpToken,otp}=req.body;
-//  const decoded=jwt.verify(otpToken,process.env.JWT_SECRET);
-//  if(!decoded || decoded.otp !==otp){
-// return res.status(400).json({ message: "Invalid OTP or Token Expired" });
-//  }
-
-//  const email=decoded.email;
-//  const user= await User.findOne({email});
-//  user.isEmailVerified=true;
-//  await user.save();
-//  return res.status(200).json({ message: "OTP verified successfully", user });
-
-
-//     }catch(error){
-//         return res.status(500).json({ message: "Error verifying OTP", error });
-      
-//     }
-// })
 
 
 router.post('/users/verify-otp',async(req,res)=>{
