@@ -7,6 +7,7 @@ const sellerroutes=require("./routes/sellerroutes");
 const productroutes=require("./routes/productroutes");
 const orderroutes=require("./routes/orderroutes");
 const loginroutes=require("./routes/loginroutes");
+const paymentroutes=require("./routes/paymentroutes");
 const cors=require("cors");
 const express = require("express");
 //reference of express
@@ -24,6 +25,8 @@ app.use("/api",sellerroutes,);
 app.use("/api",productroutes,);
 app.use("/api",loginroutes,);
 app.use("/api",orderroutes,);
+app.use("/api",paymentroutes,);
+
 app.listen(8080, () => {
     console.log("Server started on port 8080");
 })

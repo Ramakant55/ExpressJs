@@ -54,6 +54,37 @@ router.post("/users",async(req,res)=>{
     
 })
 
+router.post("/users/profile", async (req, res) => {
+    try {
+        const { name, email, phone, avatar } = req.body;
+        let user = await User.findOne({ email });
+        
+        if (user) {
+            user.name = name;
+            user.phone = phone;
+            user.avatar = avatar;
+        } else {
+            user = new User({ name, email, phone, avatar });
+        }
+        
+        await user.save();
+        res.json({ success: true, message: "Profile saved successfully!", user });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Get Profile by Email
+router.get("/users/profile/:email", async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.params.email });
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        
+        res.json({ success: true, user });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 
 
 router.post('/users/verify-otp',async(req,res)=>{
