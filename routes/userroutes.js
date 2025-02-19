@@ -6,6 +6,11 @@ const router=express.Router(); //method for routing
 const crypto=require("crypto");
 const cloudinary=require("../config/cloudnary");
 const multer=require("multer");
+
+//Multer configuration storage
+const storage=  multer.memoryStorage();
+const upload=multer({storage});
+
 //create a router for post
 const generateOtp=()=>{
     return crypto.randomInt(100000, 999999).toString();
