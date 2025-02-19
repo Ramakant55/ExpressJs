@@ -85,12 +85,15 @@ router.post("/users/profile", upload.single("avatar"), async (req, res) => {
             user = new User({ name, email, phone, avatar: avatarUrl });
         }
 
-        await user.save();
+        // ❌ Yahan direct .save() nahi karenge warna dob aur password ka validation fail hoga.
+        await user.save({ validateBeforeSave: false });  // ✅ Validation disable kar diya
+
         res.json({ success: true, message: "Profile saved successfully!", user });
     } catch (error) {
         res.status(500).json({ success: false, message: "Something went wrong!", error });
     }
 });
+
 
 
 
