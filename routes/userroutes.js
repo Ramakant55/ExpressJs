@@ -68,13 +68,10 @@ router.post("/users/profile", upload.single("avatar"), async (req, res) => {
         let avatarUrl = "";
 
         if (req.file) {
-            const result = await new Promise((resolve, reject) => {
-                const stream = cloudinary.uploader.upload_stream({ folder: "profiles" }, (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                });
-                stream.end(req.file.buffer);
-            });
+            const result = await cloudinary.uploader.upload(
+                `data:image/png;base64,${req.file.buffer.toString("base64")}`,
+                { folder: "profiles" }
+            );
 
             avatarUrl = result.secure_url;
         }
@@ -91,9 +88,10 @@ router.post("/users/profile", upload.single("avatar"), async (req, res) => {
         await user.save();
         res.json({ success: true, message: "Profile saved successfully!", user });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Something went wrong!" });
+        res.status(500).json({ success: false, message: "Something went wrong!", error });
     }
 });
+
 
 
 
@@ -101,13 +99,15 @@ router.post("/users/profile", upload.single("avatar"), async (req, res) => {
 router.get("/users/profile/:email", async (req, res) => {
     try {
         const user = await User.findOne({ email: req.params.email });
-        if (!user) return res.status(404).json({ success: false, message: "User not found" });
-        
-        res.json({ success: true, user });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.json(user);
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ message: "Error fetching User", error });
     }
 });
+
 
 
 router.post('/users/verify-otp',async(req,res)=>{
