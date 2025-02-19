@@ -4,6 +4,7 @@ const {sendEmail}=require("../config/emailConfig");
 const jwt=require("jsonwebtoken");
 const router=express.Router(); //method for routing
 const crypto=require("crypto");
+const cloudinary=require("../config/cloudnary");
 
 //create a router for post
 const generateOtp=()=>{
@@ -58,15 +59,26 @@ router.post("/users/profile", async (req, res) => {
     try {
         const { name, email, phone, avatar } = req.body;
         let user = await User.findOne({ email });
-        
+
+        // Upload image to Cloudinary
+        let imageUrl = user?.avatar;
+        if (avatar) {
+            const uploadRes = await cloudinary.uploader.upload(avatar, {
+                folder: "avatars",
+                public_id: email.split("@")[0],
+                overwrite: true
+            });
+            imageUrl = uploadRes.secure_url;
+        }
+
         if (user) {
             user.name = name;
             user.phone = phone;
-            user.avatar = avatar;
+            user.avatar = imageUrl;
         } else {
-            user = new User({ name, email, phone, avatar });
+            user = new User({ name, email, phone, avatar: imageUrl });
         }
-        
+
         await user.save();
         res.json({ success: true, message: "Profile saved successfully!", user });
     } catch (error) {
