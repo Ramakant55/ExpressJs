@@ -5,7 +5,7 @@ const jwt=require("jsonwebtoken");
 const router=express.Router(); //method for routing
 const crypto=require("crypto");
 const cloudinary=require("../config/cloudnary");
-
+const multer=require("multer");
 //create a router for post
 const generateOtp=()=>{
     return crypto.randomInt(100000, 999999).toString();
@@ -55,28 +55,35 @@ router.post("/users",async(req,res)=>{
     
 })
 
-router.post("/users/profile", async (req, res) => {
-    try {
-        const { name, email, phone, avatar } = req.body;
-        let user = await User.findOne({ email });
 
-        // Upload image to Cloudinary
-        let imageUrl = user?.avatar;
-        if (avatar) {
-            const uploadRes = await cloudinary.uploader.upload(avatar, {
-                folder: "avatars",
-                public_id: email.split("@")[0],
-                overwrite: true
-            });
-            imageUrl = uploadRes.secure_url;
+// 🟢 Save Profile with Image
+router.post("/users/profile", upload.single("avatar"), async (req, res) => {
+    try {
+        const { name, email, phone } = req.body;
+        let avatarUrl = "";
+
+        // 🟡 Cloudinary me image upload karo
+        if (req.file) {
+            const result = await cloudinary.uploader.upload_stream(
+                { folder: "profiles" },
+                (error, result) => {
+                    if (error) {
+                        console.error("Cloudinary Upload Error:", error);
+                        return res.status(500).json({ success: false, message: "Image upload failed" });
+                    }
+                    avatarUrl = result.secure_url;
+                }
+            ).end(req.file.buffer);
         }
+
+        let user = await User.findOne({ email });
 
         if (user) {
             user.name = name;
             user.phone = phone;
-            user.avatar = imageUrl;
+            if (avatarUrl) user.avatar = avatarUrl;
         } else {
-            user = new User({ name, email, phone, avatar: imageUrl });
+            user = new User({ name, email, phone, avatar: avatarUrl });
         }
 
         await user.save();
@@ -85,6 +92,7 @@ router.post("/users/profile", async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
 
 // Get Profile by Email
 router.get("/users/profile/:email", async (req, res) => {
