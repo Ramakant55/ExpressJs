@@ -17,6 +17,18 @@ router.post("/users",async(req,res)=>{
 
     try{
         const {name,email,password,dob,phone}=req.body;
+        
+        // Add input validation
+        if (!name || !email || !password || !dob || !phone) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+        
+        // Add email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: "Invalid email format" });
+        }
+        
         const existingUser=await User.findOne({email});
         if(existingUser){
             return res.status(400).json({message:"User already exists"});
@@ -157,7 +169,7 @@ router.post("/user/login", async (req, res) => {
 });
 
 
-router.get("/users",async(req,res)=>{
+router.get("/users", authenticateToken, async(req,res)=>{
     try{
         const users=await User.find();
         res.status(200).json({users});
@@ -166,7 +178,7 @@ router.get("/users",async(req,res)=>{
     }
 })
 
-router.get("/users/:id",async(req,res)=>{
+router.get("/users/:id", authenticateToken, async(req,res)=>{
     try{
         const user=await User.findById(req.params.id);
         if(!user){
@@ -178,7 +190,7 @@ router.get("/users/:id",async(req,res)=>{
     }
 })
 //create a router for put
-router.put("/users/:id",async(req,res)=>{
+router.put("/users/:id", authenticateToken, async(req,res)=>{
     try{
         const updatedUser=await User.findByIdAndUpdate(req.params.id,req.body,{new:true});
         if(!updatedUser){
@@ -191,7 +203,7 @@ router.put("/users/:id",async(req,res)=>{
     }
 })
 //create a router for patch
-router.patch("/users/:id",async(req,res)=>{
+router.patch("/users/:id", authenticateToken, async(req,res)=>{
     try{
         const updatedUser=await User.findByIdAndUpdate(req.params.id,req.body,{new:true});
         if(!updatedUser){
@@ -203,7 +215,7 @@ router.patch("/users/:id",async(req,res)=>{
      }
 })
 //create a router for delete
-router.delete("/users/:id",async(req,res)=>{
+router.delete("/users/:id", authenticateToken, async(req,res)=>{
     try{
         const user=await User.findByIdAndDelete(req.params.id);
         if(!user){
@@ -217,7 +229,7 @@ router.delete("/users/:id",async(req,res)=>{
 })
 
 // Upload profile picture using Cloudinary
-router.post('/users/profile-picture', authenticateToken, upload.single('avatar'), async (req, res) => {
+router.post("/users/profile", authenticateToken, upload.single('avatar'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: "No file uploaded" });
@@ -251,6 +263,7 @@ router.post('/users/profile-picture', authenticateToken, upload.single('avatar')
         res.status(500).json({ message: "Error uploading profile picture", error });
     }
 });
+
 
 // Delete profile picture
 router.delete('/users/profile-picture', authenticateToken, async (req, res) => {
