@@ -8,4 +8,39 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET  
 });
 
-module.exports = cloudinary;
+// Helper function to upload to Cloudinary
+const uploadToCloudinary = (buffer) => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: 'avatars',
+                width: 500,
+                height: 500,
+                crop: 'fill'
+            },
+            (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+            }
+        );
+
+        const bufferStream = require('stream').Readable.from(buffer);
+        bufferStream.pipe(uploadStream);
+    });
+};
+
+// Helper function to delete from Cloudinary
+const deleteFromCloudinary = async (publicId) => {
+    try {
+        await cloudinary.uploader.destroy(`avatars/${publicId}`);
+    } catch (error) {
+        console.error('Error deleting from Cloudinary:', error);
+        throw error;
+    }
+};
+
+module.exports = {
+    cloudinary,
+    uploadToCloudinary,
+    deleteFromCloudinary
+};
