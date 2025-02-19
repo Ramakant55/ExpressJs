@@ -5,8 +5,8 @@ const jwt=require("jsonwebtoken");
 const router=express.Router(); //method for routing
 const crypto=require("crypto");
 const upload = require('../config/multerConfig');
-const { authenticateToken } = require('../middleware/auth');
-const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudinaryConfig');
+const { authenticateToken } = require('../middlewares/authmiddleware');
+const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudnary');
 
 //create a router for post
 const generateOtp=()=>{
