@@ -178,7 +178,7 @@ router.get("/users", authenticateToken, async(req,res)=>{
     }
 })
 
-router.get("/users/:id", authenticateToken, async(req,res)=>{
+router.get("/users/:id", authMiddleware, async(req,res)=>{
     try{
         const user=await User.findById(req.params.id);
         if(!user){
@@ -190,7 +190,7 @@ router.get("/users/:id", authenticateToken, async(req,res)=>{
     }
 })
 //create a router for put
-router.put("/users/:id", authenticateToken, async(req,res)=>{
+router.put("/users/:id", authMiddleware, async(req,res)=>{
     try{
         const updatedUser=await User.findByIdAndUpdate(req.params.id,req.body,{new:true});
         if(!updatedUser){
@@ -203,7 +203,7 @@ router.put("/users/:id", authenticateToken, async(req,res)=>{
     }
 })
 //create a router for patch
-router.patch("/users/:id", authenticateToken, async(req,res)=>{
+router.patch("/users/:id", authMiddleware, async(req,res)=>{
     try{
         const updatedUser=await User.findByIdAndUpdate(req.params.id,req.body,{new:true});
         if(!updatedUser){
@@ -215,7 +215,7 @@ router.patch("/users/:id", authenticateToken, async(req,res)=>{
      }
 })
 //create a router for delete
-router.delete("/users/:id", authenticateToken, async(req,res)=>{
+router.delete("/users/:id", authMiddleware, async(req,res)=>{
     try{
         const user=await User.findByIdAndDelete(req.params.id);
         if(!user){
@@ -229,7 +229,7 @@ router.delete("/users/:id", authenticateToken, async(req,res)=>{
 })
 
 // Upload profile picture using Cloudinary
-router.post("/users/profile", authenticateToken, upload.single('avatar'), async (req, res) => {
+router.post("/users/profile", authMiddleware, upload.single('avatar'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: "No file uploaded" });
@@ -266,7 +266,7 @@ router.post("/users/profile", authenticateToken, upload.single('avatar'), async 
 
 
 // Delete profile picture
-router.delete('/users/profile-picture', authenticateToken, async (req, res) => {
+router.delete('/users/profile-picture', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.userId;
         const user = await User.findById(userId);
