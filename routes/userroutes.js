@@ -134,17 +134,22 @@ router.post("/user/login", async (req, res) => {
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
-       
-        // if(!result){
-        //     return res.status(401).json({ message: " Does not match password" });
-        // }
+        // Add password verification
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        // Uncomment email verification check if needed
         // if(!user.isEmailVerified){
-        //     return res.status(401).json({ message: "User is not verified Please verify your email" });
+        //     return res.status(401).json({ message: "User is not verified. Please verify your email" });
         // }
 
-        const token = jwt.sign({ userId: user._id,email:user.email },
-             process.env.JWT_SECRET,
-             { expiresIn: '1h' });
+        const token = jwt.sign(
+            { userId: user._id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
         res.status(200).json({ message: "Login successful", user, token });
     } catch (error) {
         res.status(500).json({ message: "Error logging in", error });
