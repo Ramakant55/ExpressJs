@@ -169,7 +169,7 @@ router.post("/user/login", async (req, res) => {
 });
 
 
-router.get("/users", authenticateToken, async(req,res)=>{
+router.get("/allusers", authenticateToken, async(req,res)=>{
     try{
         const users=await User.find();
         res.status(200).json({users});
