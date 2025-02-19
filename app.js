@@ -6,7 +6,6 @@ const routes=require("./routes/userroutes");
 const sellerroutes=require("./routes/sellerroutes");
 const productroutes=require("./routes/productroutes");
 const orderroutes=require("./routes/orderroutes");
-const loginroutes=require("./routes/loginroutes");
 const paymentroutes=require("./routes/paymentroutes");
 const cors=require("cors");
 const express = require("express");
@@ -23,7 +22,6 @@ app.get("/", (req, res) => {
 app.use("/api",routes,);
 app.use("/api",sellerroutes,);
 app.use("/api",productroutes,);
-app.use("/api",loginroutes,);
 app.use("/api",orderroutes,);
 app.use("/api",paymentroutes,);
 

@@ -169,14 +169,17 @@ router.post("/user/login", async (req, res) => {
 });
 
 
-router.get("/allusers", authenticateToken, async(req,res)=>{
-    try{
-        const users=await User.find();
-        res.status(200).json({users});
-    }catch(error){
-        res.status(500).json({message:"Error fetching Users",error});
+router.get("/allusers", authenticateToken, async (req, res) => {
+    try {
+        console.log("Request received for all users");  // Debugging
+        const users = await User.find();
+        console.log("Fetched users:", users);  // Debugging
+        res.status(200).json({ users });
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).json({ message: "Error fetching Users", error });
     }
-})
+});
 
 router.get("/users/:id", authenticateToken, async(req,res)=>{
     try{
