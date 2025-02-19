@@ -281,4 +281,4 @@ router.delete('/users/profile-picture', authenticateToken, async (req, res) => {
     }
 });
 
-module.exports=router;
+module.exports = router;
