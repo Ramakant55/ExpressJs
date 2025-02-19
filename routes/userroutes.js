@@ -4,37 +4,21 @@ const {sendEmail}=require("../config/emailConfig");
 const jwt=require("jsonwebtoken");
 const router=express.Router(); //method for routing
 const crypto=require("crypto");
-// const upload = require('../config/multerConfig');
-const authMiddleware = require('../middlewares/authmiddleware');
-// const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudnary');
 
 //create a router for post
 const generateOtp=()=>{
     return crypto.randomInt(100000, 999999).toString();
 }
-
+const x=generateOtp();
 router.post("/users",async(req,res)=>{
+
     try{
         const {name,email,password,dob,phone}=req.body;
-        
-        // Add input validation
-        if (!name || !email || !password || !dob || !phone) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-        
-        // Add email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ message: "Invalid email format" });
-        }
-        
         const existingUser=await User.findOne({email});
         if(existingUser){
             return res.status(400).json({message:"User already exists"});
         }
         const newUser=new User({name,email,password,dob,phone});
-        const otp = generateOtp();
-        
         const mailOptions = {
             from: process.env.EMAIL,
             to: email,
@@ -45,7 +29,7 @@ router.post("/users",async(req,res)=>{
                 <p>Thank You For Registering On Our Ayurveda Platform.</p>
                 <p>Your OTP for verification is:</p>
                 <div style="background-color: #fff; border: 1px solid #ddd; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; width: 150px; margin: 20px auto;">
-                    ${otp}
+                    ${x}
                 </div>
                 <p>Best Regards,<br>Ayurveda</p>
             </div>
@@ -54,19 +38,18 @@ router.post("/users",async(req,res)=>{
         // Send email
         const emailResponse = await sendEmail(mailOptions);
         if (!emailResponse.success) {
-            throw new Error("Failed to send email");
+            console.log("Email failed:", emailResponse.error);
         }
         
         await newUser.save();
         
-        const token = jwt.sign({ otp: otp, email: newUser.email },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' });
+                const token = jwt.sign({ otp:x,email:newUser.email},
+                    process.env.JWT_SECRET,
+                    { expiresIn: '1h' });
         res.status(200).json({message:"User created successfully",token:token});
 
     }catch(error){
-        console.error("Error:", error);
-        res.status(500).json({message: "Error creating User", error: error.message});
+     res.status(500).json({message:"Error creating User",error});
     }
     
 })
@@ -148,22 +131,17 @@ router.post("/user/login", async (req, res) => {
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
-        // Add password verification
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
-            return res.status(401).json({ message: "Invalid email or password" });
-        }
-
-        // Uncomment email verification check if needed
+       
+        // if(!result){
+        //     return res.status(401).json({ message: " Does not match password" });
+        // }
         // if(!user.isEmailVerified){
-        //     return res.status(401).json({ message: "User is not verified. Please verify your email" });
+        //     return res.status(401).json({ message: "User is not verified Please verify your email" });
         // }
 
-        const token = jwt.sign(
-            { userId: user._id, email: user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
+        const token = jwt.sign({ userId: user._id,email:user.email },
+             process.env.JWT_SECRET,
+             { expiresIn: '1h' });
         res.status(200).json({ message: "Login successful", user, token });
     } catch (error) {
         res.status(500).json({ message: "Error logging in", error });
@@ -171,19 +149,16 @@ router.post("/user/login", async (req, res) => {
 });
 
 
-router.get("/allusers", authMiddleware, async (req, res) => {
-    try {
-        console.log("Request received for all users");  // Debugging
-        const users = await User.find();
-        console.log("Fetched users:", users);  // Debugging
-        res.status(200).json({ users });
-    } catch (error) {
-        console.error("Error fetching users:", error);
-        res.status(500).json({ message: "Error fetching Users", error });
+router.get("/users",async(req,res)=>{
+    try{
+        const users=await User.find();
+        res.status(200).json({users});
+    }catch(error){
+        res.status(500).json({message:"Error fetching Users",error});
     }
-});
+})
 
-router.get("/users/:id", authMiddleware, async(req,res)=>{
+router.get("/users/:id",async(req,res)=>{
     try{
         const user=await User.findById(req.params.id);
         if(!user){
@@ -195,37 +170,35 @@ router.get("/users/:id", authMiddleware, async(req,res)=>{
     }
 })
 //create a router for put
-router.put("/users/:id", authMiddleware, async (req, res) => {
-    try {
-        const updatedUser = await User.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
-        
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        
-        return res.status(200).json(updatedUser);
-    } catch (error) {
-        return res.status(500).json({ message: "Error updating user" });
-    }
-});
-//create a router for patch
-router.patch("/users/:id", authMiddleware, async(req,res)=>{
+router.put("/users/:id",async(req,res)=>{
     try{
         const updatedUser=await User.findByIdAndUpdate(req.params.id,req.body,{new:true});
         if(!updatedUser){
             return res.status(404).json({message:"User not found"});
         }
         res.status(200).json({message:"User updated successfully",updatedUser});
+        await user.save();
+        res.status(200).json({message:"User updated successfully",updatedUser});
     }catch(error){
-         return res.status(500).json({message:"Error updating User",error});
+       return res.status(500).json({message:"Error updating User",updatedUser});
+    }
+})
+//create a router for patch
+router.patch("/users/:id",async(req,res)=>{
+    try{
+        const updatedUser=await User.findByIdAndUpdate(req.params.id,req.body,{new:true});
+        if(!updatedUser){
+            return res.status(404).json({message:"User not found"});
+        }
+         res.status(200).json({message:"User updated successfully",updatedUser});
+        
+        res.status(200).json({message:"User updated successfully",updatedUser});
+    }catch(error){
+         return res.status(500).json({message:"Error updating User",updatedUser});
      }
 })
 //create a router for delete
-router.delete("/users/:id", authMiddleware, async(req,res)=>{
+router.delete("/users/:id",async(req,res)=>{
     try{
         const user=await User.findByIdAndDelete(req.params.id);
         if(!user){
@@ -238,70 +211,4 @@ router.delete("/users/:id", authMiddleware, async(req,res)=>{
     }
 })
 
-// Upload profile picture using Cloudinary
-// router.post("/users/profile", authenticateToken, upload.single('avatar'), async (req, res) => {
-//     try {
-//         if (!req.file) {
-//             return res.status(400).json({ message: "No file uploaded" });
-//         }
-
-//         const userId = req.user.userId;
-//         const user = await User.findById(userId);
-
-//         if (!user) {
-//             return res.status(404).json({ message: "User not found" });
-//         }
-
-//         // Delete old image from Cloudinary if exists
-//         if (user.avatar) {
-//             const publicId = user.avatar.split('/').pop().split('.')[0];
-//             await deleteFromCloudinary(publicId);
-//         }
-
-//         // Upload new image to Cloudinary
-//         const result = await uploadToCloudinary(req.file.buffer);
-
-//         // Update user avatar URL
-//         user.avatar = result.secure_url;
-//         await user.save();
-
-//         res.status(200).json({
-//             message: "Profile picture uploaded successfully",
-//             avatar: user.avatar
-//         });
-//     } catch (error) {
-//         res.status(500).json({ message: "Error uploading profile picture", error });
-//     }
-// });
-
-
-// // Delete profile picture
-// router.delete('/users/profile-picture', authenticateToken, async (req, res) => {
-//     try {
-//         const userId = req.user.userId;
-//         const user = await User.findById(userId);
-
-//         if (!user) {
-//             return res.status(404).json({ message: "User not found" });
-//         }
-
-//         if (!user.avatar) {
-//             return res.status(400).json({ message: "No profile picture to delete" });
-//         }
-
-//         // Delete from Cloudinary
-//         if (user.avatar.includes('cloudinary')) {
-//             const publicId = user.avatar.split('/').pop().split('.')[0];
-//             await deleteFromCloudinary(publicId);
-//         }
-
-//         user.avatar = undefined;
-//         await user.save();
-
-//         res.status(200).json({ message: "Profile picture deleted successfully" });
-//     } catch (error) {
-//         res.status(500).json({ message: "Error deleting profile picture", error });
-//     }
-// });
-
-module.exports = router;
+module.exports=router;
