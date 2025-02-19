@@ -4,9 +4,9 @@ const {sendEmail}=require("../config/emailConfig");
 const jwt=require("jsonwebtoken");
 const router=express.Router(); //method for routing
 const crypto=require("crypto");
-const upload = require('../config/multerConfig');
+// const upload = require('../config/multerConfig');
 const { authenticateToken } = require('../middlewares/authmiddleware');
-const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudnary');
+// const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudnary');
 
 //create a router for post
 const generateOtp=()=>{
@@ -237,69 +237,69 @@ router.delete("/users/:id", authenticateToken, async(req,res)=>{
 })
 
 // Upload profile picture using Cloudinary
-router.post("/users/profile", authenticateToken, upload.single('avatar'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No file uploaded" });
-        }
+// router.post("/users/profile", authenticateToken, upload.single('avatar'), async (req, res) => {
+//     try {
+//         if (!req.file) {
+//             return res.status(400).json({ message: "No file uploaded" });
+//         }
 
-        const userId = req.user.userId;
-        const user = await User.findById(userId);
+//         const userId = req.user.userId;
+//         const user = await User.findById(userId);
 
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found" });
+//         }
 
-        // Delete old image from Cloudinary if exists
-        if (user.avatar) {
-            const publicId = user.avatar.split('/').pop().split('.')[0];
-            await deleteFromCloudinary(publicId);
-        }
+//         // Delete old image from Cloudinary if exists
+//         if (user.avatar) {
+//             const publicId = user.avatar.split('/').pop().split('.')[0];
+//             await deleteFromCloudinary(publicId);
+//         }
 
-        // Upload new image to Cloudinary
-        const result = await uploadToCloudinary(req.file.buffer);
+//         // Upload new image to Cloudinary
+//         const result = await uploadToCloudinary(req.file.buffer);
 
-        // Update user avatar URL
-        user.avatar = result.secure_url;
-        await user.save();
+//         // Update user avatar URL
+//         user.avatar = result.secure_url;
+//         await user.save();
 
-        res.status(200).json({
-            message: "Profile picture uploaded successfully",
-            avatar: user.avatar
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Error uploading profile picture", error });
-    }
-});
+//         res.status(200).json({
+//             message: "Profile picture uploaded successfully",
+//             avatar: user.avatar
+//         });
+//     } catch (error) {
+//         res.status(500).json({ message: "Error uploading profile picture", error });
+//     }
+// });
 
 
-// Delete profile picture
-router.delete('/users/profile-picture', authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.userId;
-        const user = await User.findById(userId);
+// // Delete profile picture
+// router.delete('/users/profile-picture', authenticateToken, async (req, res) => {
+//     try {
+//         const userId = req.user.userId;
+//         const user = await User.findById(userId);
 
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found" });
+//         }
 
-        if (!user.avatar) {
-            return res.status(400).json({ message: "No profile picture to delete" });
-        }
+//         if (!user.avatar) {
+//             return res.status(400).json({ message: "No profile picture to delete" });
+//         }
 
-        // Delete from Cloudinary
-        if (user.avatar.includes('cloudinary')) {
-            const publicId = user.avatar.split('/').pop().split('.')[0];
-            await deleteFromCloudinary(publicId);
-        }
+//         // Delete from Cloudinary
+//         if (user.avatar.includes('cloudinary')) {
+//             const publicId = user.avatar.split('/').pop().split('.')[0];
+//             await deleteFromCloudinary(publicId);
+//         }
 
-        user.avatar = undefined;
-        await user.save();
+//         user.avatar = undefined;
+//         await user.save();
 
-        res.status(200).json({ message: "Profile picture deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ message: "Error deleting profile picture", error });
-    }
-});
+//         res.status(200).json({ message: "Profile picture deleted successfully" });
+//     } catch (error) {
+//         res.status(500).json({ message: "Error deleting profile picture", error });
+//     }
+// });
 
 module.exports = router;
