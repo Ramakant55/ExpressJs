@@ -1,4 +1,3 @@
-//Basic setup of Express js
 //require db.js
 const connectDB = require("./config/db");
 require("dotenv").config(); 
