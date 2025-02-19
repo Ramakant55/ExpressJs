@@ -77,22 +77,30 @@ router.post("/users/profile", upload.single("avatar"), async (req, res) => {
         }
 
         let user = await User.findOne({ email });
+
         if (user) {
+            // ✅ Agar user exist karta hai toh update karo
             user.name = name;
             user.phone = phone;
             if (avatarUrl) user.avatar = avatarUrl;
         } else {
+            // ✅ Naya user create karte waqt duplicate key error avoid karne ke liye `new:true` use karo
             user = new User({ name, email, phone, avatar: avatarUrl });
         }
 
-        // ❌ Yahan direct .save() nahi karenge warna dob aur password ka validation fail hoga.
-        await user.save({ validateBeforeSave: false });  // ✅ Validation disable kar diya
+        await user.save({ validateBeforeSave: false });
 
         res.json({ success: true, message: "Profile saved successfully!", user });
     } catch (error) {
+        if (error.code === 11000) {
+            // ✅ Duplicate Email Handle Karo
+            return res.status(400).json({ success: false, message: "Email already exists!", error });
+        }
+
         res.status(500).json({ success: false, message: "Something went wrong!", error });
     }
 });
+
 
 
 
