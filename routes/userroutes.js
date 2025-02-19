@@ -190,18 +190,23 @@ router.post("/user/login", async (req, res) => {
 //     }
 // })
 //create a router for put
-router.put("/users/:id", authenticateToken, async(req,res)=>{
-    try{
-        const updatedUser=await User.findByIdAndUpdate(req.params.id,req.body,{new:true});
-        if(!updatedUser){
-            return res.status(404).json({message:"User not found"});
+router.put("/users/:id", authenticateToken, async (req, res) => {
+    try {
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: req.body },
+            { new: true, runValidators: true }
+        );
+        
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
         }
-        await updatedUser.save();
-        res.status(200).json({message:"User updated successfully",updatedUser});
-    }catch(error){
-       return res.status(500).json({message:"Error updating User",error});
+        
+        res.status(200).json({ message: "User updated successfully", updatedUser });
+    } catch (error) {
+        return res.status(500).json({ message: "Error updating User", error: error.message });
     }
-})
+});
 //create a router for patch
 router.patch("/users/:id", authenticateToken, async(req,res)=>{
     try{
