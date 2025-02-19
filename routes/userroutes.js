@@ -279,4 +279,53 @@ router.delete('/users/profile-picture', authMiddleware, async (req, res) => {
     }
 });
 
+// Get user profile
+router.get('/users/profile', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({ 
+            success: true,
+            data: {
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                address: user.address,
+                profilePicture: user.profilePicture
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching profile", error: error.message });
+    }
+});
+
+// Update user profile
+router.put('/users/update-profile', authMiddleware, async (req, res) => {
+    try {
+        const { name, phone, address } = req.body;
+        const user = await User.findById(req.user.userId);
+        
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Update only allowed fields
+        if (name) user.name = name;
+        if (phone) user.phone = phone;
+        if (address) user.address = address;
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            data: user
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating profile", error: error.message });
+    }
+});
+
 module.exports=router;

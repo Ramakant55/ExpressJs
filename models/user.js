@@ -9,7 +9,8 @@ const UserSchema = new mongoose.Schema({
     avatar: { type: String },
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
     isEmailVerified: { type: Boolean, default: false },
-    profilePicture: { type: String ,default:null}
+    profilePicture: { type: String, default: null },
+    address: { type: String, default: null }
 });
 
 module.exports = mongoose.model("User", UserSchema);
