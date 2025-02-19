@@ -19,11 +19,11 @@ app.get("/", (req, res) => {
     res.send("Hello World! Program Of ExpressJS");
 }
 )
-app.use("/api",routes,);
-app.use("/api",sellerroutes,);
-app.use("/api",productroutes,);
-app.use("/api",orderroutes,);
-app.use("/api",paymentroutes,);
+app.use("/api",routes);
+app.use("/api",sellerroutes);
+app.use("/api",productroutes);
+app.use("/api",orderroutes);
+app.use("/api",paymentroutes);
 
 app.listen(8080, () => {
     console.log("Server started on port 8080");
