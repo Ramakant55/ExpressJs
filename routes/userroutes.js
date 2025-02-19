@@ -5,16 +5,15 @@ const jwt=require("jsonwebtoken");
 const router=express.Router(); //method for routing
 const crypto=require("crypto");
 // const upload = require('../config/multerConfig');
-const { authenticateToken } = require('../middlewares/authmiddleware');
+const authMiddleware = require('../middlewares/authmiddleware');
 // const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudnary');
 
 //create a router for post
 const generateOtp=()=>{
     return crypto.randomInt(100000, 999999).toString();
 }
-const x=generateOtp();
-router.post("/users",async(req,res)=>{
 
+router.post("/users",async(req,res)=>{
     try{
         const {name,email,password,dob,phone}=req.body;
         
@@ -34,6 +33,8 @@ router.post("/users",async(req,res)=>{
             return res.status(400).json({message:"User already exists"});
         }
         const newUser=new User({name,email,password,dob,phone});
+        const otp = generateOtp();
+        
         const mailOptions = {
             from: process.env.EMAIL,
             to: email,
@@ -44,7 +45,7 @@ router.post("/users",async(req,res)=>{
                 <p>Thank You For Registering On Our Ayurveda Platform.</p>
                 <p>Your OTP for verification is:</p>
                 <div style="background-color: #fff; border: 1px solid #ddd; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; width: 150px; margin: 20px auto;">
-                    ${x}
+                    ${otp}
                 </div>
                 <p>Best Regards,<br>Ayurveda</p>
             </div>
@@ -53,18 +54,19 @@ router.post("/users",async(req,res)=>{
         // Send email
         const emailResponse = await sendEmail(mailOptions);
         if (!emailResponse.success) {
-            console.log("Email failed:", emailResponse.error);
+            throw new Error("Failed to send email");
         }
         
         await newUser.save();
         
-                const token = jwt.sign({ otp:x,email:newUser.email},
-                    process.env.JWT_SECRET,
-                    { expiresIn: '1h' });
+        const token = jwt.sign({ otp: otp, email: newUser.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' });
         res.status(200).json({message:"User created successfully",token:token});
 
     }catch(error){
-     res.status(500).json({message:"Error creating User",error});
+        console.error("Error:", error);
+        res.status(500).json({message: "Error creating User", error: error.message});
     }
     
 })
@@ -169,7 +171,7 @@ router.post("/user/login", async (req, res) => {
 });
 
 
-router.get("/allusers", authenticateToken, async (req, res) => {
+router.get("/allusers", authMiddleware, async (req, res) => {
     try {
         console.log("Request received for all users");  // Debugging
         const users = await User.find();
@@ -181,7 +183,7 @@ router.get("/allusers", authenticateToken, async (req, res) => {
     }
 });
 
-router.get("/users/:id", authenticateToken, async(req,res)=>{
+router.get("/users/:id", authMiddleware, async(req,res)=>{
     try{
         const user=await User.findById(req.params.id);
         if(!user){
@@ -193,7 +195,7 @@ router.get("/users/:id", authenticateToken, async(req,res)=>{
     }
 })
 //create a router for put
-router.put("/users/:id", authenticateToken, async (req, res) => {
+router.put("/users/:id", authMiddleware, async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
@@ -211,7 +213,7 @@ router.put("/users/:id", authenticateToken, async (req, res) => {
     }
 });
 //create a router for patch
-router.patch("/users/:id", authenticateToken, async(req,res)=>{
+router.patch("/users/:id", authMiddleware, async(req,res)=>{
     try{
         const updatedUser=await User.findByIdAndUpdate(req.params.id,req.body,{new:true});
         if(!updatedUser){
@@ -223,7 +225,7 @@ router.patch("/users/:id", authenticateToken, async(req,res)=>{
      }
 })
 //create a router for delete
-router.delete("/users/:id", authenticateToken, async(req,res)=>{
+router.delete("/users/:id", authMiddleware, async(req,res)=>{
     try{
         const user=await User.findByIdAndDelete(req.params.id);
         if(!user){
