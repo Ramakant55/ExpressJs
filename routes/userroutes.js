@@ -4,6 +4,9 @@ const {sendEmail}=require("../config/emailConfig");
 const jwt=require("jsonwebtoken");
 const router=express.Router(); //method for routing
 const crypto=require("crypto");
+const upload = require('../middlewares/uploadMiddleware');
+const cloudinary = require('../config/cloudnary');
+const authMiddleware = require('../middlewares/authmiddleware');
 
 //create a router for post
 const generateOtp=()=>{
@@ -210,5 +213,70 @@ router.delete("/users/:id",async(req,res)=>{
         res.status(500).json({message:"Error deleting User",error});
     }
 })
+
+// Upload/Update profile picture
+router.post('/users/profile-picture', authMiddleware, upload.single('profilePicture'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // If user already has a profile picture, delete it from Cloudinary
+        if (user.profilePicture) {
+            const publicId = user.profilePicture.split('/').pop().split('.')[0];
+            await cloudinary.uploader.destroy(publicId);
+        }
+
+        // Upload new image to Cloudinary
+        const b64 = Buffer.from(req.file.buffer).toString('base64');
+        let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+        const result = await cloudinary.uploader.upload(dataURI, {
+            folder: 'profile_pictures',
+            resource_type: 'auto'
+        });
+
+        // Update user profile picture URL in database
+        user.profilePicture = result.secure_url;
+        await user.save();
+
+        res.status(200).json({
+            message: "Profile picture updated successfully",
+            profilePicture: result.secure_url
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating profile picture", error: error.message });
+    }
+});
+
+// Delete profile picture
+router.delete('/users/profile-picture', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (!user.profilePicture) {
+            return res.status(400).json({ message: "No profile picture to delete" });
+        }
+
+        // Delete from Cloudinary
+        const publicId = user.profilePicture.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+
+        // Remove profile picture URL from user document
+        user.profilePicture = null;
+        await user.save();
+
+        res.status(200).json({ message: "Profile picture deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting profile picture", error: error.message });
+    }
+});
 
 module.exports=router;

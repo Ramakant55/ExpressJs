@@ -8,7 +8,8 @@ const UserSchema = new mongoose.Schema({
     phone: { type: String, required: true, unique: true },
     avatar: { type: String },
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
-    isEmailVerified: { type: Boolean, default: false }
+    isEmailVerified: { type: Boolean, default: false },
+    profilePicture: { type: String ,default:null}
 });
 
 module.exports = mongoose.model("User", UserSchema);
