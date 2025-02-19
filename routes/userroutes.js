@@ -221,24 +221,26 @@ router.post('/users/profile-picture', authMiddleware, upload.single('profilePict
             return res.status(400).json({ message: "No file uploaded" });
         }
 
+        // Add logging to debug
+        console.log("File received:", req.file);
+        console.log("User ID:", req.user.userId);
+
         const user = await User.findById(req.user.userId);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // If user already has a profile picture, delete it from Cloudinary
-        if (user.profilePicture) {
-            const publicId = user.profilePicture.split('/').pop().split('.')[0];
-            await cloudinary.uploader.destroy(publicId);
-        }
-
         // Upload new image to Cloudinary
         const b64 = Buffer.from(req.file.buffer).toString('base64');
         let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+        
+        // Add logging for Cloudinary upload
+        console.log("Attempting Cloudinary upload...");
         const result = await cloudinary.uploader.upload(dataURI, {
             folder: 'profile_pictures',
             resource_type: 'auto'
         });
+        console.log("Cloudinary result:", result);
 
         // Update user profile picture URL in database
         user.profilePicture = result.secure_url;
