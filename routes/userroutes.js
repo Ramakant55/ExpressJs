@@ -62,23 +62,28 @@ router.post("/users",async(req,res)=>{
 
 
 // 🟢 Save Profile with Image
+const { promisify } = require("util");
+
 router.post("/users/profile", upload.single("avatar"), async (req, res) => {
     try {
         const { name, email, phone } = req.body;
         let avatarUrl = "";
 
-        // 🟡 Cloudinary me image upload karo
         if (req.file) {
-            const result = await cloudinary.uploader.upload_stream(
-                { folder: "profiles" },
-                (error, result) => {
-                    if (error) {
-                        console.error("Cloudinary Upload Error:", error);
-                        return res.status(500).json({ success: false, message: "Image upload failed" });
+            const uploadPromise = promisify(cloudinary.uploader.upload_stream);
+
+            const result = await new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    { folder: "profiles" },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result);
                     }
-                    avatarUrl = result.secure_url;
-                }
-            ).end(req.file.buffer);
+                );
+                stream.end(req.file.buffer);
+            });
+
+            avatarUrl = result.secure_url;
         }
 
         let user = await User.findOne({ email });
@@ -94,9 +99,11 @@ router.post("/users/profile", upload.single("avatar"), async (req, res) => {
         await user.save();
         res.json({ success: true, message: "Profile saved successfully!", user });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Profile Upload Error:", error);
+        res.status(500).json({ success: false, message: "Something went wrong!" });
     }
 });
+
 
 
 // Get Profile by Email
