@@ -67,6 +67,10 @@ router.post("/users/profile", upload.single("avatar"), async (req, res) => {
         const { name, email, phone } = req.body;
         let avatarUrl = "";
 
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Email is required!" });
+        }
+
         if (req.file) {
             const result = await cloudinary.uploader.upload(
                 `data:image/png;base64,${req.file.buffer.toString("base64")}`,
@@ -78,32 +82,23 @@ router.post("/users/profile", upload.single("avatar"), async (req, res) => {
 
         let user = await User.findOne({ email });
 
-        if (user) {
-            // ✅ Agar user exist karta hai toh update karo
-            user.name = name;
-            user.phone = phone;
-            if (avatarUrl) user.avatar = avatarUrl;
-        } else {
-            // ✅ Naya user create karte waqt duplicate key error avoid karne ke liye `new:true` use karo
-            user = new User({ name, email, phone, avatar: avatarUrl });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found!" });
         }
+
+        // ✅ Sirf update karna hai
+        user.name = name || user.name;
+        user.phone = phone || user.phone;
+        if (avatarUrl) user.avatar = avatarUrl;
 
         await user.save({ validateBeforeSave: false });
 
-        res.json({ success: true, message: "Profile saved successfully!", user });
+        res.json({ success: true, message: "Profile updated successfully!", user });
     } catch (error) {
-        if (error.code === 11000) {
-            // ✅ Duplicate Email Handle Karo
-            return res.status(400).json({ success: false, message: "Email already exists!", error });
-        }
-
+        console.error("Profile Update Error:", error);
         res.status(500).json({ success: false, message: "Something went wrong!", error });
     }
 });
-
-
-
-
 
 
 // Get Profile by Email
@@ -188,28 +183,38 @@ router.post("/users/resend-otp", async (req, res) => {
 });
 
 
-router.post("/user/login", async (req, res) => {
+router.post("/users/login", async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ email });
+        let user = await User.findOne({ email });
+
         if (!user) {
-            return res.status(401).json({ message: "Invalid email or password" });
+            return res.status(404).json({ success: false, message: "User not found!" });
         }
 
-       
-        // if(!result){
-        //     return res.status(401).json({ message: " Does not match password" });
-        // }
-        // if(!user.isEmailVerified){
-        //     return res.status(401).json({ message: "User is not verified Please verify your email" });
-        // }
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ success: false, message: "Invalid credentials!" });
+        }
 
-        const token = jwt.sign({ userId: user._id,email:user.email },
-             process.env.JWT_SECRET,
-             { expiresIn: '1h' });
-        res.status(200).json({ message: "Login successful", user, token });
+        // ✅ Token generate karo
+        const token = jwt.sign({ userId: user._id }, "secret", { expiresIn: "7d" });
+
+        // ✅ Complete user profile bhejo frontend ke liye
+        res.json({
+            success: true,
+            message: "Login successful!",
+            token,
+            user: {
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                avatar: user.avatar
+            }
+        });
     } catch (error) {
-        res.status(500).json({ message: "Error logging in", error });
+        console.error("Login Error:", error);
+        res.status(500).json({ success: false, message: "Something went wrong!", error });
     }
 });
 
