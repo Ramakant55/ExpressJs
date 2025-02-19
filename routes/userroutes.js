@@ -169,42 +169,42 @@ router.post("/user/login", async (req, res) => {
 });
 
 
-// router.get("/allusers", authenticateToken, async(req,res)=>{
-//     try{
-//         const users=await User.find();
-//         res.status(200).json({users});
-//     }catch(error){
-//         res.status(500).json({message:"Error fetching Users",error});
-//     }
-// })
+router.get("/allusers", authenticateToken, async(req,res)=>{
+    try{
+        const users=await User.find();
+        res.status(200).json({users});
+    }catch(error){
+        res.status(500).json({message:"Error fetching Users",error});
+    }
+})
 
-// router.get("/users/:id", authenticateToken, async(req,res)=>{
-//     try{
-//         const user=await User.findById(req.params.id);
-//         if(!user){
-//             return res.status(404).json({message:"User not found"});
-//         }
-//         res.status(200).json( user);
-//     }catch(error){
-//         res.status(500).json({message:"Error fetching User",error});
-//     }
-// })
+router.get("/users/:id", authenticateToken, async(req,res)=>{
+    try{
+        const user=await User.findById(req.params.id);
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+        res.status(200).json( user);
+    }catch(error){
+        res.status(500).json({message:"Error fetching User",error});
+    }
+})
 //create a router for put
 router.put("/users/:id", authenticateToken, async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
-            { $set: req.body },
-            { new: true, runValidators: true }
+            req.body,
+            { new: true }
         );
         
         if (!updatedUser) {
             return res.status(404).json({ message: "User not found" });
         }
         
-        res.status(200).json({ message: "User updated successfully", updatedUser });
+        return res.status(200).json(updatedUser);
     } catch (error) {
-        return res.status(500).json({ message: "Error updating User", error: error.message });
+        return res.status(500).json({ message: "Error updating user" });
     }
 });
 //create a router for patch
