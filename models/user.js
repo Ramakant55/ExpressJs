@@ -6,7 +6,7 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true, unique: true },
     dob: { type: Date, required: true },
     phone: { type: String, required: true, unique: true },
-    avatar: { type: String },
+    avatar: { type: String, default:"" },
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
     isEmailVerified: { type: Boolean, default: false, enum: [true, false] }
 });
