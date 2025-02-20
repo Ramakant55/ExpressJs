@@ -33,8 +33,36 @@ router.post("/products",authMidleware,upload.single("image"),async(req,res)=>{
                     
             });
             imageurl=result.secure_url;
-            const {name,description,price,category,quantity,seller}=req.body;
-            const newProduct=new Product({name,description,price,category,quantity,seller,imageurl});
+            
+            const {
+                name,
+                description,
+                price,
+                originalPrice,
+                category,
+                subCategory,
+                quantity,
+                seller,
+                sizes,
+                tags,
+                isBestSeller
+            } = req.body;
+
+            const newProduct=new Product({
+                name,
+                description,
+                price,
+                originalPrice,
+                category,
+                subCategory,
+                quantity,
+                seller,
+                imageurl,
+                sizes: sizes ? JSON.parse(sizes) : [],
+                tags: tags ? JSON.parse(tags) : [],
+                isBestSeller: isBestSeller === 'true',
+                inStock: quantity > 0
+            });
             await newProduct.save();
             res.status(201).json({message:"Product uploaded successfully",product:newProduct});
         }
@@ -45,6 +73,21 @@ router.post("/products",authMidleware,upload.single("image"),async(req,res)=>{
         res.status(500).json({message:"Error uploading product",error});
     }
 })
+
+//bulk upload products
+router.post("/bulk-products",authMidleware,async(req,res)=>{
+    try{
+        const products=req.body.products;
+        if(!Array.isArray(products)){
+            return res.status(400).json({message:"Products must be an array"});
+        }
+        const insertedProducts=await Product.insertMany(products);
+        res.status(201).json({message:`Successfully added ${insertedProducts.length} products`,products:insertedProducts});
+    }catch(error){
+        res.status(500).json({message:"Error uploading bulk products",error});
+    }
+})
+
 //route no 2 for getting all products
 router.get("/home_Products",async(req,res)=>{
     try{
@@ -56,34 +99,46 @@ router.get("/home_Products",async(req,res)=>{
 })
 
 //route no 3 for update a product by put method
-router.patch("/products/:id",async(req,res)=>{
-    try{
-        const updatedProduct=await Product.findByIdAndUpdate(req.params.id,req.body,{new:true});
-        if(!updatedProduct){
-            return res.status(404).json({message:"Product not found"});
+router.patch("/products/:id", async(req,res) => {
+    try {
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            {new: true}
+        );
+        if(!updatedProduct) {
+            return res.status(404).json({message: "Product not found"});
         }
-        res.status(200).json({message:"Product updated successfully",updatedProduct});
-        await product.save();
-        res.status(200).json({message:"Product updated successfully",updatedProduct});
-    }catch(error){
-       return res.status(500).json({message:"Error updating Product",updatedProduct});
+        res.status(200).json({message: "Product updated successfully", product: updatedProduct});
+    } catch(error) {
+        res.status(500).json({message: "Error updating Product", error});
     }
-})
+});
 
 //route no 4 for delete a product by delete method
-router.delete("/products/:id",async(req,res)=>{
-    try{
-      const product= await Product.findByIdAndDelete(req.params.id);
-      if(!product){
-        return res.status(404).json({message:"Product not found"});
+router.delete("/products/:id", async(req,res) => {
+    try {
+        const product = await Product.findByIdAndDelete(req.params.id);
+        if(!product) {
+            return res.status(404).json({message: "Product not found"});
+        }
+        res.status(200).json({message: "Product deleted successfully", product});
+    } catch(error) {
+        res.status(500).json({message: "Error deleting Product", error});
     }
-    res.status(201).json({message:"Product deleted successfully",product});
-    await product.save();
-    res.status(200).json({message:"Product deleted successfully",product});
+});
 
-    }catch(error){
-        res.status(500).json({message:"Error deleting Product",error});
+//route no 5 for getting single product details
+router.get("/products/:id", async(req,res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if(!product) {
+            return res.status(404).json({message: "Product not found"});
+        }
+        res.status(200).json({product});
+    } catch(error) {
+        res.status(500).json({message: "Error fetching product", error});
     }
-})
+});
 
 module.exports=router;
