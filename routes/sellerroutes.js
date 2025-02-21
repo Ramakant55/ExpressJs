@@ -42,7 +42,11 @@ router.post('/seller', async (req, res) => {
         // }
 
 
-        res.status(200).json({ message: "Seller created successfully", seller: newSeller });
+        res.status(200).json({ 
+            message: "Seller created successfully", 
+            seller: newSeller,
+            otpToken: otpToken
+        });
     } catch (error) {
         res.status(500).json({ message: "Error creating Seller", error:error.message });
     }
