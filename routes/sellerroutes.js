@@ -95,7 +95,7 @@ router.post("/seller/bulk", async (req, res) => {
 })
 
 
-router.get('/seller', async (req, res) => {
+router.get('/allseller', async (req, res) => {
     try {
         const sellers = await Seller.find();
         res.status(200).json({ sellers });
