@@ -35,9 +35,8 @@ const ProductSchema = new mongoose.Schema({
         default: 0
     },
     seller: { 
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Seller",
-        required: true
+        type: String,
+        required: true 
     },
     ratings: {
         type: Number,
