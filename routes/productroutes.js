@@ -14,65 +14,139 @@ const upload=multer({storage});
 
 //route no 1 for uploading product
 
-router.post("/products",authMidleware,upload.single("image"),async(req,res)=>{
-    try{
-        let imageurl="";
-        if(req.file){
-            const result= await new Promise((resolve,reject)=>{
-                const stream=cloudinary.uploader.upload_stream(
-                    {folder:"products"},
-                    (error,result)=>{
-                        if(result){
-                            resolve(result);
-                        }else{
-                            reject(error);
-                        }
-                    }
-                )
-                stream.end(req.file.buffer);
+// router.post("/products",authMidleware,upload.single("image"),async(req,res)=>{
+//     try{
+//         let imageurl="";
+//         if(req.file){
+//             const result= await new Promise((resolve,reject)=>{
+//                 const stream=cloudinary.uploader.upload_stream(
+//                     {folder:"products"},
+//                     (error,result)=>{
+//                         if(result){
+//                             resolve(result);
+//                         }else{
+//                             reject(error);
+//                         }
+//                     }
+//                 )
+//                 stream.end(req.file.buffer);
                     
-            });
-            imageurl=result.secure_url;
+//             });
+//             imageurl=result.secure_url;
             
-            const {
-                name,
-                description,
-                price,
-                originalPrice,
-                category,
-                subCategory,
-                quantity,
-                seller,
-                sizes,
-                tags,
-                isBestSeller
-            } = req.body;
+//             const {
+//                 name,
+//                 description,
+//                 price,
+//                 originalPrice,
+//                 category,
+//                 subCategory,
+//                 quantity,
+//                 seller,
+//                 sizes,
+//                 tags,
+//                 isBestSeller
+//             } = req.body;
 
-            const newProduct=new Product({
-                name,
-                description,
-                price,
-                originalPrice,
-                category,
-                subCategory,
-                quantity,
-                seller,
-                imageurl,
-                sizes: sizes ? JSON.parse(sizes) : [],
-                tags: tags ? JSON.parse(tags) : [],
-                isBestSeller: isBestSeller === 'true',
-                inStock: quantity > 0
-            });
-            await newProduct.save();
-            res.status(201).json({message:"Product uploaded successfully",product:newProduct});
-        }
+//             const newProduct=new Product({
+//                 name,
+//                 description,
+//                 price,
+//                 originalPrice,
+//                 category,
+//                 subCategory,
+//                 quantity,
+//                 seller,
+//                 imageurl,
+//                 sizes: sizes ? JSON.parse(sizes) : [],
+//                 tags: tags ? JSON.parse(tags) : [],
+//                 isBestSeller: isBestSeller === 'true',
+//                 inStock: quantity > 0
+//             });
+//             await newProduct.save();
+//             res.status(201).json({message:"Product uploaded successfully",product:newProduct});
+//         }
 
 
        
-    }catch(error){
-        res.status(500).json({message:"Error uploading product",error});
+//     }catch(error){
+//         res.status(500).json({message:"Error uploading product",error});
+//     }
+// })
+router.post("/products", authMidleware, upload.single("image"), async(req, res) => {
+    try {
+        let imageurl = "";
+        if (!req.file) {
+            return res.status(400).json({ message: "Image is required" });
+        }
+
+        // Verify seller ID
+        if (!req.body.seller) {
+            return res.status(400).json({ message: "Seller ID is required" });
+        }
+
+        // Upload image to cloudinary
+        const result = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                { folder: "products" },
+                (error, result) => {
+                    if (result) {
+                        resolve(result);
+                    } else {
+                        reject(error);
+                    }
+                }
+            );
+            stream.end(req.file.buffer);
+        });
+        
+        imageurl = result.secure_url;
+
+        const {
+            name,
+            description,
+            price,
+            originalPrice,
+            category,
+            subCategory,
+            quantity,
+            seller,
+            sizes,
+            tags,
+            isBestSeller
+        } = req.body;
+
+        // Create new product with seller ID
+        const newProduct = new Product({
+            name,
+            description,
+            price,
+            originalPrice,
+            category,
+            subCategory,
+            quantity,
+            seller, // This will store the seller's ID
+            imageurl,
+            sizes: sizes ? JSON.parse(sizes) : [],
+            tags: tags ? JSON.parse(tags) : [],
+            isBestSeller: isBestSeller === 'true',
+            inStock: quantity > 0
+        });
+
+        await newProduct.save();
+        
+        // Populate seller details if needed
+        const populatedProduct = await Product.findById(newProduct._id).populate('seller', 'name email');
+        
+        res.status(201).json({
+            message: "Product uploaded successfully",
+            product: populatedProduct
+        });
+    } catch (error) {
+        console.error('Error uploading product:', error);
+        res.status(500).json({ message: "Error uploading product", error: error.message });
     }
-})
+});
 
 //bulk upload products
 router.post("/bulk-products",authMidleware,async(req,res)=>{
