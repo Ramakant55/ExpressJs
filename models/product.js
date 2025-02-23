@@ -33,9 +33,10 @@ const ProductSchema = new mongoose.Schema({
         type: Number, 
         required: true,
         default: 0
-    },
+    }, 
     seller: { 
-        type: String,
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Seller',  
         required: true 
     },
     ratings: {
