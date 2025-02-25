@@ -5,7 +5,7 @@ const UserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true }, // ✅ Unique hata diya
     dob: { type: Date, required: true },
-    phone: { type: String, required: true, unique: true },
+    phone: { type: Number, required: true, unique: true },
     avatar: { type: String },
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
     isEmailVerified: { type: Boolean, default: false }
